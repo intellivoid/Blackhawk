@@ -5,8 +5,8 @@
  * BlackHawk: CryptoManager.php
  *
  *
- * Created: 1/20/20, 1:04 PM
- * Last modified: 1/20/20, 5:57 AM
+ * Created: 1/21/20, 3:42 AM
+ * Last modified: 1/21/20, 2:24 AM
  * Modified by: intellivoid/antiengineer
  *
  * @copyright 2020 (C) Nighthawk Media Group
@@ -17,12 +17,12 @@
  *
  */
 
-namespace BlackHawk\classes\security;
+namespace BlackHawk\classes\managers\security;
 use InvalidArgumentException;
 
 /**
  * Class CryptoManager
- * @package BlackHawk\classes\security
+ * @package BlackHawk\classes\managers\security
  */
 class CryptoManager
 {
