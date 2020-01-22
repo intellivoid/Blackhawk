@@ -5,8 +5,8 @@
  * BlackHawk: ITenant.php
  *
  *
- * Created: 1/22/20, 5:11 AM
- * Last modified: 1/21/20, 6:32 AM
+ * Created: 1/22/20, 4:57 PM
+ * Last modified: 1/22/20, 4:31 PM
  * Modified by: intellivoid/antiengineer
  *
  * @copyright 2020 (C) Nighthawk Media Group
@@ -20,6 +20,7 @@
 namespace BlackHawk\interfaces;
 
 use BlackHawk\exceptions\configuration\ConfigReadException;
+use BlackHawk\objects\RouteHandler;
 
 /**
  * Interface ITenant
@@ -39,4 +40,5 @@ interface ITenant
      * Processes incoming request for the specific tenant.
      */
     public function processIncomingRequest() : void;
+
 }
