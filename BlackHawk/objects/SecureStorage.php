@@ -5,8 +5,8 @@
  * BlackHawk: SecureStorage.php
  *
  *
- * Created: 1/20/20, 1:04 PM
- * Last modified: 1/20/20, 5:30 AM
+ * Created: 1/22/20, 4:58 PM
+ * Last modified: 1/22/20, 4:24 PM
  * Modified by: intellivoid/antiengineer
  *
  * @copyright 2020 (C) Nighthawk Media Group
@@ -19,6 +19,8 @@
 
 namespace BlackHawk\objects;
 use BlackHawk\BlackHawk;
+use BlackHawk\classes\managers\security\CryptoManager;
+use ZiProto\ZiProto;
 
 /**
  * Class SecureStorage
@@ -36,7 +38,7 @@ class SecureStorage
 
     /**
      * Array containing global variables during runtime.
-     * ENCRYPTED
+     * UNENCRYPTED
      *
      * @var array
      */
@@ -44,7 +46,7 @@ class SecureStorage
 
     /**
      * Array containing provisioned tenants during runtime.
-     * UNENCRYPTED
+     * ENCRYPTED
      *
      * @var array
      */
@@ -60,6 +62,45 @@ class SecureStorage
         $this->bhMain = $main;
     }
 
+
+    /**
+     * Adds a new tenant to memory, and returns boolean representing action status
+     *
+     * @param Tenant $tenant
+     * @return void
+     */
+    public function addTenant(Tenant $tenant) {
+        $hostname = $tenant->getTenantInfo()["hostname"];
+        $this->_tenants[$hostname] = CryptoManager::AesEncrypt($this->bhMain->getConfig()->get("security")["encryptionKey"], ZiProto::encode($tenant), $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX2"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1*X2"]);
+    }
+
+    /**
+     * Returns encrypted tenants
+     *
+     * @return array
+     */
+    public function getTenants(){
+        $tenants = [];
+        foreach ($this->_tenants as $hostname => $tenantEnc) {
+            $tenants[$hostname] = ZiProto::decode(CryptoManager::AesDecrypt($this->bhMain->getConfig()->get("security")["encryptionKey"], $tenantEnc, $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX2"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1*X2"]));
+        }
+        return $tenants;
+    }
+
+    /**
+     * Returns requested tenant
+     *
+     * @param string $tenantHostname
+     * @return bool|mixed
+     */
+    public function getTenant(string $tenantHostname) {
+        if(!isset($this->_tenants[$tenantHostname])) {
+            return false;
+        } else {
+            return ZiProto::decode(CryptoManager::AesDecrypt($this->bhMain->getConfig()->get("security")["encryptionKey"], $this->_tenants[$tenantHostname], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX2"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1*X2"]));
+        }
+    }
+
     /**
      * Sets an object to memory, and returns the object that's stored in memory
      *
@@ -69,7 +110,7 @@ class SecureStorage
      */
     public  function setMemoryObject(string $variable_name, $object)
     {
-        $this->_globalObjects[$variable_name] = $object;
+        $this->_globalObjects[$variable_name] = CryptoManager::AesEncrypt($this->bhMain->getConfig()->get("security")["encryptionKey"], ZiProto::encode($object), $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX2"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1*X2"]);
         return $this->_globalObjects[$variable_name];
     }
 
@@ -86,7 +127,7 @@ class SecureStorage
             return null;
         }
 
-        return $this->_globalObjects[$variable_name];
+        return ZiProto::decode(CryptoManager::AesDecrypt($this->bhMain->getConfig()->get("security")["encryptionKey"], $this->_globalObjects[$variable_name], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX2"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1*X2"]));
     }
 
     /**

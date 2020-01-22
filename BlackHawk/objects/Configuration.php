@@ -5,8 +5,8 @@
  * BlackHawk: Configuration.php
  *
  *
- * Created: 1/21/20, 3:42 AM
- * Last modified: 1/21/20, 2:22 AM
+ * Created: 1/22/20, 4:58 PM
+ * Last modified: 1/22/20, 12:12 PM
  * Modified by: intellivoid/antiengineer
  *
  * @copyright 2020 (C) Nighthawk Media Group
@@ -81,7 +81,7 @@ class Configuration
      * @return mixed
      * @throws ConfigParameterNotExistentException
      */
-    public function getConfig(string $section) {
+    public function get(string $section) {
         if(isset($this->configuration[$section])) {
             return $this->configuration[$section];
         } else {
