@@ -1,0 +1,19 @@
+{
+  "version": "v1.0.0",
+  "info": {
+    "friendly-name": "Nighthawk AntiSpam API",
+    "identifier": "nighthawk-antispam",
+    "hostname": "antispam.night-hawk.tech",
+    "main_language": "en",
+    "useGlobalSettings" : true
+  },
+  "debug": {
+    "error_reporting": true,
+    "logging": true,
+    "sentry": {
+      "enabled": true,
+      "key": ""
+    }
+  },
+  "entryPoint": "AntiSpamTenant.php"
+}
