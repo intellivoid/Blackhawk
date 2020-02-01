@@ -5,8 +5,8 @@
  * BlackHawk: CryptoManager.php
  *
  *
- * Created: 1/21/20, 3:42 AM
- * Last modified: 1/21/20, 2:24 AM
+ * Created: 2/1/20, 12:25 PM
+ * Last modified: 1/24/20, 7:01 PM
  * Modified by: intellivoid/antiengineer
  *
  * @copyright 2020 (C) Nighthawk Media Group
@@ -57,8 +57,12 @@ class CryptoManager
      */
     public static function AesDecrypt(string $encryptionKey, $data, string $vS1 = "AxBe21#F)1&834mbNC92~", int $vS2 = 15, int $vS3 = 13) {
         $key = hash("sha256", hex2bin(implode(unpack("H*", $vS1.$encryptionKey))));
-        $iv = mb_substr($data, $vS2, $vS2 + openssl_cipher_iv_length("AES-256-CBC"), '8bit');
-        $decData = mb_substr($data, $vS2, mb_strlen($data, '8bit') - $vS3, '8bit');
+        $iv = mb_substr($data, $vS2, openssl_cipher_iv_length("AES-256-CBC"), '8bit');
+        //echo "$vS2 - ".($vS2 + openssl_cipher_iv_length("AES-256-CBC"))."-";
+        //echo bin2hex($iv);
+        //echo "<br>".bin2hex($data);
+        $decData = mb_substr($data, $vS2 + openssl_cipher_iv_length("AES-256-CBC"), mb_strlen($data, '8bit') - $vS3 - $vS2 - mb_strlen($iv, '8bit'), '8bit');
+        //echo "<br>".bin2hex($decData);
         $val = openssl_decrypt($decData, "AES-256-CBC", $key, OPENSSL_RAW_DATA, $iv);
         if ($val === FALSE) {
             throw new InvalidArgumentException("AES Decryption error.");

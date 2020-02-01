@@ -5,8 +5,8 @@
  * BlackHawk: ITenant.php
  *
  *
- * Created: 1/22/20, 4:57 PM
- * Last modified: 1/22/20, 4:31 PM
+ * Created: 2/1/20, 12:25 PM
+ * Last modified: 1/24/20, 6:59 PM
  * Modified by: intellivoid/antiengineer
  *
  * @copyright 2020 (C) Nighthawk Media Group
@@ -38,7 +38,8 @@ interface ITenant
 
     /**
      * Processes incoming request for the specific tenant.
+     * @param array $IPStackData
      */
-    public function processIncomingRequest() : void;
+    public function processIncomingRequest(array $IPStackData) : void;
 
 }

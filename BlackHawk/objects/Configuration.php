@@ -5,8 +5,8 @@
  * BlackHawk: Configuration.php
  *
  *
- * Created: 1/22/20, 4:58 PM
- * Last modified: 1/22/20, 12:12 PM
+ * Created: 2/1/20, 12:25 PM
+ * Last modified: 1/30/20, 7:45 PM
  * Modified by: intellivoid/antiengineer
  *
  * @copyright 2020 (C) Nighthawk Media Group
@@ -41,7 +41,7 @@ class Configuration
      *
      * @var array
      */
-    private $configuration;
+    public $configuration;
 
     /**
      * Loads/creates configuration if it does not exist
@@ -88,4 +88,5 @@ class Configuration
             throw new ConfigParameterNotExistentException("The parameter specified does not exist");
         }
     }
+
 }

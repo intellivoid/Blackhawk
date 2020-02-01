@@ -5,8 +5,8 @@
  * BlackHawk: RouteHandler.php
  *
  *
- * Created: 1/22/20, 5:26 AM
- * Last modified: 1/21/20, 7:01 AM
+ * Created: 2/1/20, 12:25 PM
+ * Last modified: 1/31/20, 6:32 PM
  * Modified by: intellivoid/antiengineer
  *
  * @copyright 2020 (C) Nighthawk Media Group
@@ -21,6 +21,7 @@ namespace BlackHawk\objects;
 
 
 use BlackHawk\abstracts\RequestStatus;
+use BlackHawk\BlackHawk;
 use BlackHawk\exceptions\runtime\RequestException;
 use BlackHawk\exceptions\runtime\ServerErrorException;
 use BlackHawk\interfaces\IRouteHandler;
@@ -47,26 +48,43 @@ class RouteHandler implements IRouteHandler
      */
     private $isAPI;
 
+    /**
+     * @var BlackHawk
+     */
+    private $bhMain;
 
+    /**
+     * @var string
+     */
+    protected $tenantPath;
     /**
      * RouteHandler constructor.
      * @param bool $isAPI
+     * @param BlackHawk $main
+     * @param string $tenantPath
      */
-    public function __construct(bool $isAPI)
+    public function __construct(bool $isAPI, BlackHawk $main, string $tenantPath = "")
     {
         $this->isAPI = $isAPI;
+        $this->bhMain = $main;
+        $this->tenantPath = $tenantPath;
     }
 
     public function getRequestStatus() : int
     {
         return $this->status;
     }
+
+    protected function getView(string $view) {
+        $view = str_replace("/", DIRECTORY_SEPARATOR, $view);
+        return $this->tenantPath.DIRECTORY_SEPARATOR."views".DIRECTORY_SEPARATOR.$view;
+    }
     /**
      * @param array $Params
+     * @param array $IPStackData
      * @return void
-     * @throws ServerErrorException
      */
-    public function processRequest(array $Params): void
+    public function processRequest(array $Params, array $IPStackData = []): void
     {
         if($this->isAPI){
             header("Content-Type: application/json");
@@ -74,7 +92,7 @@ class RouteHandler implements IRouteHandler
         $this->status = RequestStatus::Received;
         try {
             $this->status = RequestStatus::Processing;
-            if (!$this->onReceive($Params)) {
+            if (!$this->onReceive($Params, $IPStackData)) {
                 $this->status = RequestStatus::Failed;
                 return;
             }
@@ -90,7 +108,7 @@ class RouteHandler implements IRouteHandler
         }
 
         try {
-            if (!$this->onComplete($Params)) {
+            if (!$this->onComplete($Params, $IPStackData)) {
                 $this->status = RequestStatus::Failed;
                 return;
             }
@@ -110,10 +128,10 @@ class RouteHandler implements IRouteHandler
      * Function executed after the request is received
      *
      * @param array $Params
+     * @param array $IPStackData
      * @return bool
-     * @throws Exception
      */
-    protected function onReceive(array $Params): bool
+    protected function onReceive(array $Params, array $IPStackData): bool
     {
         return false;
     }
@@ -122,10 +140,10 @@ class RouteHandler implements IRouteHandler
      * Function executed after the request was completed
      *
      * @param array $Params
+     * @param array $IPStackData
      * @return bool
-     * @throws Exception
      */
-    protected function onComplete(array $Params): bool
+    protected function onComplete(array $Params, array $IPStackData): bool
     {
         return false;
     }

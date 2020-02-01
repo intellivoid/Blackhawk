@@ -5,8 +5,8 @@
  * BlackHawk: SecureStorage.php
  *
  *
- * Created: 1/22/20, 4:58 PM
- * Last modified: 1/22/20, 4:24 PM
+ * Created: 2/1/20, 12:25 PM
+ * Last modified: 1/30/20, 5:20 PM
  * Modified by: intellivoid/antiengineer
  *
  * @copyright 2020 (C) Nighthawk Media Group
@@ -34,7 +34,7 @@ class SecureStorage
      *
      * @var array
      */
-    private $_globalObjects;
+    public $_globalObjects;
 
     /**
      * Array containing global variables during runtime.
@@ -42,7 +42,7 @@ class SecureStorage
      *
      * @var array
      */
-    private $_globalVariables;
+    public $_globalVariables;
 
     /**
      * Array containing provisioned tenants during runtime.
@@ -50,7 +50,7 @@ class SecureStorage
      *
      * @var array
      */
-    private $_tenants;
+    public $_tenants;
 
     /**
      * @var BlackHawk
@@ -60,6 +60,9 @@ class SecureStorage
     public function __construct(BlackHawk $main)
     {
         $this->bhMain = $main;
+        $this->_tenants = [];
+        $this->_globalObjects = [];
+        $this->_globalVariables = [];
     }
 
 
@@ -71,7 +74,7 @@ class SecureStorage
      */
     public function addTenant(Tenant $tenant) {
         $hostname = $tenant->getTenantInfo()["hostname"];
-        $this->_tenants[$hostname] = CryptoManager::AesEncrypt($this->bhMain->getConfig()->get("security")["encryptionKey"], ZiProto::encode($tenant), $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX2"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1*X2"]);
+        $this->_tenants[$hostname] = CryptoManager::AesEncrypt($this->bhMain->getConfig()->get("security")["encryptionKey"], ZiProto::encode(serialize($tenant)), $this->bhMain->getConfig()->get("security")["salts"]["VX1"], $this->bhMain->getConfig()->get("security")["salts"]["VX2"], $this->bhMain->getConfig()->get("security")["salts"]["VX1*X2"]);
     }
 
     /**
@@ -80,9 +83,10 @@ class SecureStorage
      * @return array
      */
     public function getTenants(){
+        //return $this->_tenants;
         $tenants = [];
         foreach ($this->_tenants as $hostname => $tenantEnc) {
-            $tenants[$hostname] = ZiProto::decode(CryptoManager::AesDecrypt($this->bhMain->getConfig()->get("security")["encryptionKey"], $tenantEnc, $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX2"], $this->bhMain->getConfig()->get("security")["encryptionKey"]["salts"]["VX1*X2"]));
+            $tenants[$hostname] = unserialize(ZiProto::decode(CryptoManager::AesDecrypt($this->bhMain->getConfig()->get("security")["encryptionKey"], $tenantEnc, $this->bhMain->getConfig()->get("security")["salts"]["VX1"], strlen($this->bhMain->getConfig()->get("security")["salts"]["VX2"]), strlen($this->bhMain->getConfig()->get("security")["salts"]["VX1*X2"]))));
         }
         return $tenants;
     }

@@ -1,20 +1,24 @@
 {
   "version": "v1.0.0",
   "debug": {
+    "dev": false,
+    "debug_trigger_tag": "MIA-2190000184ZBZ_A",
     "error_reporting": true,
     "logging": true,
     "sentry": {
       "enabled": true,
-      "key": ""
+      "key": "https://f2bdc1d36d0e4107a1053975aa541bb3@sentry.io/1935797"
     }
   },
   "providers": {
     "IPStack": {
-      "key": ""
+      "enabled": true,
+      "key": "5c7a5ef6486073d85bc8a425f851c9f6"
     }
   },
   "render" : {
-    "defaultTenant": "blackhawk.local"
+    "defaultTenant": "blackhawk.local",
+    "tenantFolder": "{MAIN_DIR}/tenants"
   },
   "security": {
     "encryptionKey": "WYe1IBD1g2OBlNoJADg7PpnUfKDtLHX7Ur/QdFHIYaKG6QBKzX8Xw1GfMyTsxfC9hDbAMc88tZuyvONWldEbmJkvAFcct4iruayzSRUM2pnqQcOU7wwaEuMe28eF99phqJAKCpxZsSA9Trhxyo/LMAGyVLRMEeWFN2zUtXQqDMqPvOK8G2lYnp8B6yI1KoitNyHp+vpITyoo9SDvAhV26SoJbabNsi1tWp8UOvCBrH3B5Y49Gzdt59soub0v+Bc9HgUTZwWJjkQpjAfgS1clwT1LiCbIWl7tvp92Aans8nrKJGfWkkFvo6kmpHMgOTS6V4TZJFmadMN7FyjrhXJYpdc7tI07uaKeFr6e3sDKzYl5nJDU5orVhwTzxxprR/dWhgFJeoK+LUS1Ve2UqSrfHi1yU7z9Ed9NDMAdN9/tzB7PJegXItxNLPkWO0tdtwBTJMyWe0VCKN2FhgqtYN7/rjsdVO9byyBxbyoMxyLJYurjkz+kgdsEmZjRgJDeWd3aOhU9ydiZGRmF+d2AgddqxItwdacSB5CmtD71S2zM2NXXZiiUItPpacH6Cl1Gjyl0eTVip8FuQpiO3JbD/UTUSEqGFKddvBHf4ZcKIiSZ8bX3bg+UxetnvADNrz8psuQTu/L59ohoyOESmjjHJR98cH5PV7mtjnYfmpV7pzAhL/s=",

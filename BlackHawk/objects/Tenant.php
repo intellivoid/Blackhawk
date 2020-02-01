@@ -5,8 +5,8 @@
  * BlackHawk: Tenant.php
  *
  *
- * Created: 1/22/20, 4:58 PM
- * Last modified: 1/22/20, 4:43 PM
+ * Created: 2/1/20, 12:25 PM
+ * Last modified: 1/31/20, 7:45 PM
  * Modified by: intellivoid/antiengineer
  *
  * @copyright 2020 (C) Nighthawk Media Group
@@ -21,6 +21,10 @@ namespace BlackHawk\objects;
 
 
 use BlackHawk\abstracts\RequestStatus;
+use BlackHawk\BlackHawk;
+use BlackHawk\classes\render\WebRender;
+use BlackHawk\classes\Utilities;
+use BlackHawk\defaults\handlers\AssetLoader;
 use BlackHawk\defaults\handlers\RequestAborted;
 use BlackHawk\defaults\handlers\RequestFailed;
 use BlackHawk\exceptions\configuration\ConfigParseException;
@@ -39,14 +43,24 @@ class Tenant implements ITenant
     private $tenantConfig;
 
     /**
-     * @var array
+     * @var BlackHawk
      */
-    private $routes;
+    protected $bhMain;
 
     /**
      * @var array
      */
-    private $namedRoutes;
+    private $routes = [];
+
+    /**
+     * @var array
+     */
+    private $namedRoutes = [];
+
+    /**
+     * @var string
+     */
+    public $tenantPath;
 
     /**
      * @var array Array of defaults match types (regex helpers)
@@ -70,31 +84,66 @@ class Tenant implements ITenant
 
     /**
      * Dummy function executed when a route is not located.
+     * @param array $IPStackData
      */
-    private function RouteNotFound() {
+    private function RouteNotFound(array $IPStackData) {
         /*
          * TODO: Customize this route to provide a result in the case a Route is not found
          */
+        if(!isset($this->namedRoutes["404"])) {
+            http_response_code(404);
+            WebRender::staticResponse(
+                "Not Found",
+                404,
+                "Not Found",
+                "The resource you are trying to locate was not found. Please check your query and try again later."
+            );
+        } else {
+            /** @var RouteHandler $route */
+            $route = $this->namedRoutes["404"];
+            $route->processRequest([], $IPStackData);
+        }
     }
 
     /**
      * @inheritDoc
      */
-    public function processIncomingRequest(): void
+    public function processIncomingRequest(array $IPStackData): void
     {
+        $Replacer = [
+            "DNS_HOST" => $_SERVER["HTTP_HOST"],
+            "CLIENT_IP" => Utilities::getClientIP(),
+            "OS" => php_uname("s"),
+            "BUILD_DATE" => date(DATE_RFC3339_EXTENDED, microtime(true)),
+            "CYEAR" => date('Y'),
+            "DEVFINGER" => Utilities::createDeviceFingerprint(),
+            "CORRELATION" => Utilities::createUUID(),
+        ];
+
+        foreach ($Replacer as $tag => $value) {
+            define("BLACKHAWK_$tag", $value);
+        }
+        define("TENANT_IDENTIFIER", $this->getTenantInfo()["identifier"]);
+        define("TENANT_HOME_PAGE", $this->getTenantInfo()["home_page"]);
+        define("TENANT_PRIMARY_LANGUAGE", $this->getTenantInfo()["main_language"]);
+        if(count($this->routes) == 0) {
+            throw new \RuntimeException("No routes were declared for this tenant.");
+        }
         if(!$this->getRouteByRequest()) {
-            $this->RouteNotFound();
+            define("TENANT_CURRENT_PAGE", "404");
+            $this->RouteNotFound($IPStackData);
         } else {
             $route = $this->getRouteByRequest();
-            $route["handler"]->processRequest($route["params"]);
+            define("TENANT_CURRENT_PAGE", $route["name"]);
+            $route["handler"]->processRequest($route["params"], $IPStackData);
 
             if($route["handler"]->GetRequestStatus() == RequestStatus::Failed) {
-                $rf = new RequestFailed($this->namedRoutes[$route["name"]], $route["handler"]);
+                $rf = new RequestFailed($this->namedRoutes[$route["name"]], $route["handler"], $this->bhMain);
                 $rf->processRequest($route["params"]);
             }
 
             if($route["handler"]->GetRequestStatus() == RequestStatus::Aborted) {
-                $rf = new RequestAborted($this->namedRoutes[$route["name"]], $route["handler"]);
+                $rf = new RequestAborted($this->namedRoutes[$route["name"]], $route["handler"], $this->bhMain);
                 $rf->processRequest($route["params"]);
             }
         }
@@ -102,18 +151,23 @@ class Tenant implements ITenant
 
     /**
      * Tenant constructor.
+     * @param BlackHawk $main
+     * @param string $loc
      */
-    public function __construct()
+    public function __construct(BlackHawk $main, string $loc)
     {
-        if(!file_exists(__DIR__.DIRECTORY_SEPARATOR."tenant.json")) {
+        $this->tenantPath = $loc;
+        if(!file_exists($loc.DIRECTORY_SEPARATOR."tenant.json")) {
             throw new ConfigReadException("Unable to read tenant configuration. Make sure tenant.json is present and try again.");
         }
-        $tCfg = file_get_contents(__DIR__.DIRECTORY_SEPARATOR."tenant.json");
-        $tCfgD = json_decode($tCfg, false);
+        $tCfg = file_get_contents($loc.DIRECTORY_SEPARATOR."tenant.json");
+        $tCfgD = json_decode($tCfg, true);
         if(is_null($tCfgD)){
             throw new ConfigParseException("Unable to parse tenant configuration. Are you sure the configuration is not malformed?");
         }
         $this->tenantConfig = $tCfgD;
+        $this->bhMain = $main;
+        $this->addRoute("AssetLoader", "GET", "/assets/[a:assetType]/[**:resource]", new AssetLoader(false, $main, $loc));
         $this->onTenantLoad();
     }
 
@@ -129,6 +183,7 @@ class Tenant implements ITenant
          */
         return;
     }
+
     /**
      * Adds a route to a specific handler
      *
@@ -138,7 +193,7 @@ class Tenant implements ITenant
      * @param RouteHandler $routeHandler The handler where this route should point to. Can be anything.
      * @throws RouteExistsException
      */
-    private function addRoute(string $routeName, string $routeRequestMethod, string $routeFormat, RouteHandler $routeHandler) : void
+    public function addRoute(string $routeName, string $routeRequestMethod, string $routeFormat, RouteHandler $routeHandler) : void
     {
         $route = new Route();
         $route->name = $routeName;
@@ -178,8 +233,8 @@ class Tenant implements ITenant
         $route = $this->namedRoutes[$routeName];
 
         // prepend base path to route url again
-        $url = $route;
-        if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER)) {
+        $url = $route->route;
+        if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $url, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $index => $match) {
                 list($block, $pre, $type, $param, $optional) = $match;
                 if ($pre) {
