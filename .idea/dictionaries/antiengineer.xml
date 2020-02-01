@@ -2,7 +2,12 @@
   <dictionary name="antiengineer">
     <words>
       <w>antiengineer</w>
+      <w>autocfg</w>
+      <w>blackhawk</w>
+      <w>bodyproperties</w>
+      <w>htmlproperties</w>
       <w>intellivoid</w>
+      <w>ipstack</w>
     </words>
   </dictionary>
 </component>
